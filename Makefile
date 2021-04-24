@@ -39,5 +39,5 @@ venv-run-example: venv-install
 venv-test: clean-venv venv-run-example
 
 test:
-	PYTHONPATH=$(PWD)/src python3 -m eyeo.test
+	PYTHONPATH=$(PWD)/src python3 -m eyeo.examples
 	PYTHONPATH=$(PWD)/src python3 -m eyeo.stringify_examples
