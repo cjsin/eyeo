@@ -109,13 +109,15 @@ def todo(message):
     Parameters:
         message (str): the message to print
     """
-    eo("TODO:" + message)
+    eo("TODO: " + message)
 
 
 def _init_level(name, defaultval=0):
     """
     Determine a default verbosity or debug level from the environment values.
-    Treats y,yes,on,true,t (upper or lower case) as 1, otherwise will expect an int in string format.
+    Treats y,yes,on,true,t (upper or lower case) as 1, 
+    and n,no,off,false,f (upper or lower case) as 0,
+    otherwise will expect an int in string format.
 
     Parameters:
         name (str): the name of the environment variable to check
@@ -125,17 +127,19 @@ def _init_level(name, defaultval=0):
         int:  the level found in the environment, or the defaultval
     """
     if name not in os.environ:
-        return 0
+        return defaultval
     else:
         val = os.environ.get(name, '')
-        if not val:
+        if val in [ None, ""]:
             return defaultval
         elif val.isdigit():
             return int(val)
         elif val.lower() in [ 'y', 'yes', 'on', 'true', 't' ]:
             return 1
-        else:
+        elif val.lower() in [ 'n', 'no', 'off', 'false', 'f' ]:
             return 0
+        else:
+            return defaultval
 
 VERBOSE = _init_level('VERBOSE', 0)
 DEBUG = _init_level('DEBUG', 0)
@@ -649,7 +653,7 @@ def warn(*args, **kwargs):
     """
     alias for warnmsg()
     """
-    warnmsg(args, **kwargs)
+    warnmsg(*args, **kwargs)
 
 def msgl(*args, **kwargs):
     """
@@ -783,7 +787,7 @@ def dbgmsg(*args):
         text = f"{prog}:{filename}.{func}:{line}:" + " ".join([str(x) for x in args])
         global DEBUG_REGEX
         if DEBUG_REGEX is not None:
-            if re.match(DEBUG_REGEX, text):
+            if not re.match(DEBUG_REGEX, text):
                 return
         msg(text)
 
@@ -865,7 +869,7 @@ def write_file(path, contents):
         return False
 
 
-def os_path_splitall(path):
+def os_path_splitall(path, support_unc=False):
     """
     Helper for the all-around shitness of os.path, which can
     only split /a/big/long/path into (/a/big/long, path)
@@ -877,15 +881,42 @@ def os_path_splitall(path):
     Returns:
         list: a list of the path components
     """
+    msg(f"os_path_splitall '{path}'")
+    if path is None:
+        return None
+    if path == "":
+        return None
+
+    if len(path) > 1 and re.match(r'^[/]{2,}$', path):
+        if support_unc:
+            return ['//']
+        else:
+            return ['/']
+
+    # if not support_unc:
+    #     # os.path.normpath leaves '//' (does not normalise it)
+    #     # when it is at the start
+    #     while path.startswith("//"):
+    #         path = path[1:]
+
+    #npath = os.path.normpath(path)
+    #if npath != path:
+    #    msg(f"path='{path}' normalised to '{npath}'")
+    #path = npath
+    if path == '/':
+        return ['/']
     split = os.path.split(path)
     if split[0] == "" and split[1] == "":
         return []
     elif split[1] == "":
-        return os_path_splitall(split[0])
+        msg(f"0='{split[0]}', 1='{split[1]}'")
+        return os_path_splitall(split[0], support_unc=support_unc)
+    elif split[0] == "":
+        return [split[1]]
     else:
-        return os_path_splitall(split[0]) + [split[1]]
+        return os_path_splitall(split[0], support_unc=support_unc) + [split[1]]
 
-def indented(*items, indent=None):
+def indented(*items, indent=None, indent_first=False):
     """
     Return a string containing some number of items on different lines, indented with an indent string.
 
@@ -904,7 +935,8 @@ def indented(*items, indent=None):
     else:
         indent = str(indent)
     ind = "\n" + indent
-    return ind.join(str(i) for i in items)
+    prefix = indent if indent_first else ""
+    return prefix + ind.join(str(i) for i in items)
 
 def isatty():
     """
