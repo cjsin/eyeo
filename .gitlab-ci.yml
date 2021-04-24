@@ -1,7 +1,8 @@
-image: python:3.9-buster
+image: python:latest
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PACKAGE_NAME: eyeo
 
 cache:
   paths:
@@ -14,6 +15,7 @@ before_script:
 stages:
   - build
   - install
+  - test
 
 build:
   stage: build
@@ -34,6 +36,27 @@ test-install:
   script:
     - python3 -m venv venv
     - . venv/bin/activate
+    - pip install --upgrade pip
     - pip install dist/*.whl
+  tags:
+    - container
+
+run-examples:
+  stage: test
+  script:
+    - python3 -m venv venv
+    - . venv/bin/activate
+    - python3 -m eyeo.examples
+    - python3 -m eyeo.stringify_examples
+  tags:
+    - container
+
+docs:
+    stage: docs
+    script:
+      - python3 -m venv venv
+      - . venv/bin/activate
+      - pip install pdoc
+      - pdoc $PACKAGE_NAME
   tags:
     - container
