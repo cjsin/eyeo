@@ -2,16 +2,20 @@
 
 # A module for simplifying regular basic output printing in common situations
 
-For example, this:
+For example, these simple types of printing:
 
     print("Some things: {} and data {}".format(1, {"a": 123}), file=sys.stderr)
+    eo("Some things: {} and data {}, 1, {"a": 123})
+
     for x in ["a","b","c"]:
         print("    "+x, file=sys.stderr)
-
-Can become:
-
-    eo("Some things: {} and daa {}, 1, {"a": 123})
     eo("a","b","c", indent="    ")
+
+    print("data=" + str(data), file=sys.stderr)
+    eo("data=", data)
+
+    print(", ".join("{02d}={}".format(idx,val) for idx,val in enumerate(items)))
+    eo(items, joiner=", ", fmt="{idx:02d}. {val}")
 
 ## Output stack
 
@@ -331,6 +335,7 @@ def output_pop(print_to_upper=False):
 def reopen_to(fhandle, path, mode):
     """
     close a filehandle and return a new one opened for the specified path and mode.
+    example: sys.stdout = reopen_to(sys.stdout, "/tmp/log.txt", "w")
     
     Parameters:
         fhandle (file): the file handle to close (may be None)
@@ -349,6 +354,7 @@ def reopen_to(fhandle, path, mode):
 def reopen_to_devnull(fhandle, mode):
     """
     Close a filehandle and return a new one for /dev/null
+    example: sys.stdout = reopen_to_devnull(sys.stdout, "w")
     
     Parameters:
         fhandle (file): the file to close (may be None)
