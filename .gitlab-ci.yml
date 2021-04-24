@@ -1,0 +1,39 @@
+image: python:3.9-buster
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+
+before_script:
+  - python -V  # Print out python version for debugging
+
+stages:
+  - build
+  - install
+
+build:
+  stage: build
+  script:
+    - python3 -m venv venv
+    - . venv/bin/activate
+    - pip install --upgrade pip
+    - pip install --upgrade build
+    - python -m build
+  artifacts:
+    paths:
+      - dist/*.whl
+  tags:
+    - docker
+
+test-install:
+  stage: install
+  script:
+    - python3 -m venv venv
+    - . venv/bin/activate
+    - pip install dist/*.whl
+  tags:
+    - docker
