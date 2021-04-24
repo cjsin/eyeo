@@ -1,7 +1,8 @@
 PACKAGE_NAME := eyeo
-ACTIVATE     := . venv/bin/activate
+ACTIVATE     := source venv/bin/activate
 VERSION      := $(shell tr -d ' ' < setup.cfg | awk -F= '/^version=/ {print $$2}')
-DISTWHEEL    := dist/$(PACKAGE_NAME)-$(VERSION)-py3-none-any.whl
+DISTWHEEL    := $(PACKAGE_NAME)-$(VERSION)-py3-none-any.whl
+README       := README.md
 
 all: build
 
@@ -13,8 +14,8 @@ version:
 lint:
 	pylint-3 src
 
-doc:
-	pdoc $(PACKAGE_NAME) > README.md
+doc: $(README)
+	pdoc $(PACKAGE_NAME) > $(README)
 
 build-reqs:
 	pip list | egrep '^build[[:space:]]' || python3 -m pip install --upgrade build
@@ -22,7 +23,11 @@ build-reqs:
 build: build-reqs
 	python3 -m build
 
-$(DISTHWEEL): build
+clean:
+	rm -rf venv build dist src/__pycache__ .pytest_cache
+
+%.whl: build
+	cp dist/$@ ./
 
 clean-venv:
 	rm -rf ./venv
@@ -31,12 +36,14 @@ venv:
 	python3 -m venv venv
 
 venv-install: venv $(DISTWHEEL)
-	$(ACTIVATE) && pip install $(DISTWHEEL)
+	$(ACTIVATE) && pip install --upgrade pip
+	$(ACTIVATE) && pip install --force-reinstall $(DISTWHEEL)
 
-venv-run-example: venv-install
-	$(ACTIVATE) python3 -m eyeo.example
+venv-run-examples: venv-install
+	$(ACTIVATE) && python3 -m eyeo.examples
+	$(ACTIVATE) && python3 -m eyeo.stringify_examples
 
-venv-test: clean-venv venv-run-example
+venv-test: clean-venv venv-run-examples
 
 test:
 	PYTHONPATH=$(PWD)/src python3 -m eyeo.examples
