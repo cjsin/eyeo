@@ -1,19 +1,60 @@
 """
-compact string dumper for objects intended to 'kind of' show the object, ie show enough of it to show what it is, however prevent gigantic dumps of text
+compact string dumper for objects intended to 'kind of' show the object, ie show enough of it to show what it is, 
+however prevent gigantic dumps of text through depth limits and string ellipsis
 """
 
 def is_obj(x):
+    """
+    A quick (but maybe not perfect) check for object types
+
+    Returns:
+      bool: True if the object has __dict__ attribute, otherwise False
+    """
     try:
         getattr(x, '__dict__')
         return True
     except:
         return False
 
-def stringify_value(v, maxDepth=None, maxItems=-1, maxStrlen=-1, callingDepth=0, recursionMap=None):
-    (_, result) = stringify(v, maxDepth, maxItems, maxStrlen, callingDepth, recursionMap)
+def stringify_value(v, maxDepth=None, maxItems=-1, maxStrlen=-1):
+    """
+    Use stringify() to convert a value to a string, and return the string representation.
+
+    Parameters:
+        see stringify()
+    Returns:
+        the string representation of the object
+    """
+    (_, result) = stringify(v, maxDepth, maxItems, maxStrlen)
     return result
 
-def stringify(v, maxDepth=None, maxItems=-1, maxStrlen=-1, callingDepth=0, recursionMap=None):
+def stringify(v, maxDepth=None, maxItems=-1, maxStrlen=-1):
+    """
+    Convert a dict to a string representation.
+
+    Parameters:
+        d(dict) : the data dict to convert
+        maxDepth (int|None):   if > 0, then ellipsise structures deeper than this
+        maxItems (int|-1):     if > 0, then ellipsise lists longer than this or dicts with more than this many items
+        maxStrlen (int|-1):    if > 0, then ellipsise strings longer than this
+
+    Returns:
+        tuple(depth:int, str): the depth (explored) of the structure and the string representation of the data
+    """
+    return _stringify(v, maxDepth=maxDepth, maxItems=maxItems, maxStrlen=maxStrlen)
+
+def _stringify(v, maxDepth=None, maxItems=-1, maxStrlen=-1, callingDepth=0, recursionMap=None):
+    """
+    Private implementation of stringify()
+
+    Parameters:
+        callingDepth (int|-1): keeps track of the current level of recursion, to implement maxDepth
+        recursionMap (dict):   keeps track of already-printed objects to short-circuit infinite recursion.
+        (others): see stringify_hash()
+
+    Returns:
+        tuple(depth:int, str): the depth (explored) of the structure and the string representation of the data
+    """
     if v is None:
         return ( 1, "(None)" )
     if recursionMap is None:
@@ -29,16 +70,16 @@ def stringify(v, maxDepth=None, maxItems=-1, maxStrlen=-1, callingDepth=0, recur
             recursionMap[id(v)] = 1
 
     if t in [list, tuple]:
-        return stringify_array(v, maxDepth, maxItems, maxStrlen, callingDepth, recursionMap)
+        return _stringify_array(v, maxDepth, maxItems, maxStrlen, callingDepth, recursionMap)
     elif t in [dict] or 'AttrDict' in str(t):
-        return stringify_hash(v, maxDepth, maxItems, maxStrlen, callingDepth, recursionMap)
+        return _stringify_hash(v, maxDepth, maxItems, maxStrlen, callingDepth, recursionMap)
     elif 'Gtk' in r or 'Gdk' in r or 'Glib' in r:
         return (1,"(Gtk-object)")
     elif isinstance(v, str):
         return (1, v)
     elif is_obj(v):
         d = dict(v.__dict__)
-        (depth, result) = stringify(d, maxDepth, maxItems, maxStrlen, callingDepth, recursionMap)
+        (depth, result) = _stringify(d, maxDepth, maxItems, maxStrlen, callingDepth, recursionMap)
         return (depth, r + result)
     elif callable(v):
         return (1,"(callable)")
@@ -48,9 +89,38 @@ def stringify(v, maxDepth=None, maxItems=-1, maxStrlen=-1, callingDepth=0, recur
 def stringify_array(v,
                     maxDepth=None,
                     maxItems=-1,
+                    maxStrlen=-1):
+    """
+    Convert a dict to a string representation.
+
+    Parameters:
+        d(dict) : the data dict to convert
+        maxDepth (int|None):   if > 0, then ellipsise structures deeper than this
+        maxItems (int|-1):     if > 0, then ellipsise lists longer than this or dicts with more than this many items
+        maxStrlen (int|-1):    if > 0, then ellipsise strings longer than this
+
+    Returns:
+        tuple(depth:int, str): the depth (explored) of the structure and the string representation of the data
+    """
+    return _stringify_array(v, maxDepth=maxDepth, maxItems=maxItems, maxStrlen=maxStrlen)
+
+def _stringify_array(v,
+                    maxDepth=None,
+                    maxItems=-1,
                     maxStrlen=-1,
                     callingDepth=0,
                     recursionMap=None):
+    """
+    Private implementation of stringify_array()
+
+    Parameters:
+        callingDepth (int|-1): keeps track of the current level of recursion, to implement maxDepth
+        recursionMap (dict):   keeps track of already-printed objects to short-circuit infinite recursion.
+        (others): see stringify_hash()
+
+    Returns:
+        tuple(depth:int, str): the depth (explored) of the structure and the string representation of the data
+    """
     if not v:
         return (0, "[]" )
 
@@ -74,7 +144,7 @@ def stringify_array(v,
     out = []
 
     for item in v:
-        (depth, child) = stringify(item, maxDepth, maxItems, maxStrlen, callingDepth + 1, recursionMap)
+        (depth, child) = _stringify(item, maxDepth, maxItems, maxStrlen, callingDepth + 1, recursionMap)
 
         if depth > max_inner_depth:
             max_inner_depth = depth
@@ -89,20 +159,48 @@ def stringify_array(v,
     if result is None:
         result = ",".join(out)
 
-    if maxStrlen >= 3 and len(result) > maxStrlen:
+    if 3 <= maxStrlen < len(result):
         result = result[0:maxStrlen-3] + "..."
 
     result = "[" + result + "]"
     return (max_inner_depth + 1, result)
 
-def stringify_hash(
+
+
+def stringify_hash(d, maxDepth=None, maxItems=-1, maxStrlen=-1):
+    """
+    Convert a dict to a string representation.
+
+    Parameters:
+        d(dict) : the data dict to convert
+        maxDepth (int|None):   if > 0, then ellipsise structures deeper than this
+        maxItems (int|-1):     if > 0, then ellipsise lists longer than this or dicts with more than this many items
+        maxStrlen (int|-1):    if > 0, then ellipsise strings longer than this
+
+    Returns:
+        tuple(depth:int, str): the depth (explored) of the structure and the string representation of the data
+    """
+    return _stringify_hash(d, maxDepth=maxDepth, maxItems=maxItems, maxStrlen=maxStrlen)
+
+
+def _stringify_hash(
         d,
         maxDepth=None,
         maxItems=-1,
         maxStrlen=-1,
         callingDepth=0,
         recursionMap=None):
+    """
+    Private implementation for stringify_hash(), with extra parameters for internal use only.
 
+    Parameters:
+        callingDepth (int|-1): keeps track of the current level of recursion, to implement maxDepth
+        recursionMap (dict):   keeps track of already-printed objects to short-circuit infinite recursion.
+        (others): see stringify_hash()
+
+    Returns:
+        tuple(depth:int, str): the depth (explored) of the structure and the string representation of the data
+    """
     if not d:
         return (0, "{}")
 
@@ -128,7 +226,7 @@ def stringify_hash(
 
     for k in ordered:
         v = d[k]
-        (depth, child) = stringify(v, maxDepth, maxItems, maxStrlen, callingDepth + 1, recursionMap)
+        (depth, child) = _stringify(v, maxDepth, maxItems, maxStrlen, callingDepth + 1, recursionMap)
 
         if depth > max_inner_depth:
             max_inner_depth = depth
@@ -145,4 +243,10 @@ def stringify_hash(
 
 
 def dump(item):
-    return stringify(item, 3, 0)
+    """
+    Use stringify_value() to dump an item, with some defaults.
+    
+    Parameters:
+        item: the data to convert to string
+    """
+    return stringify_value(item, 3, 0)

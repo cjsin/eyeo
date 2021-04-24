@@ -15,7 +15,7 @@ def stringify_test(item, maxDepth=None, maxItems=-1, maxStrlen=-1):
     msg("  maxStrlen ", maxStrlen)
     msg("  result    ", stringify( item, maxDepth, maxItems, maxStrlen))
 
-def tests():
+def examples():
     stringify_test(TestObj("hash",              {}))
     stringify_test(TestObj("hash",              {'a': 1}))
     stringify_test(TestObj("hash",              {'a': 1, 'b': 2}))
@@ -35,7 +35,7 @@ def tests():
 
     stringify_test(TestObj("long string",{ 'short': "abcdef", 'long': "123456789abcdef"}), -1, -1, 8)
 
-    sys.exit(1)
+    sys.exit(0)
 
 if __name__ == "__main__":
-    tests()
+    examples()
