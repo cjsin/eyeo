@@ -16,6 +16,7 @@ stages:
   - build
   - install
   - test
+  - docs
 
 build:
   stage: build
@@ -52,11 +53,11 @@ run-examples:
     - container
 
 docs:
-    stage: docs
-    script:
-      - python3 -m venv venv
-      - . venv/bin/activate
-      - pip install pdoc
-      - pdoc $PACKAGE_NAME
+  stage: docs
+  script:
+    - python3 -m venv venv
+    - . venv/bin/activate
+    - pip install pdoc
+    - pdoc $PACKAGE_NAME
   tags:
     - container
