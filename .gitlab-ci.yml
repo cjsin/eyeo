@@ -27,7 +27,7 @@ build:
     paths:
       - dist/*.whl
   tags:
-    - docker
+    - container
 
 test-install:
   stage: install
@@ -36,4 +36,4 @@ test-install:
     - . venv/bin/activate
     - pip install dist/*.whl
   tags:
-    - docker
+    - container
