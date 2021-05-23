@@ -19,7 +19,7 @@ For example, these simple types of printing:
 
 ## Output stack
 
-The output stack provides the ability to temporarily make the routines print to 
+The output stack provides the ability to temporarily make the routines print to
 a different destination, or capture the output to a string.
 
 For example:
@@ -29,9 +29,9 @@ For example:
         output_add(f)
         eo("This prints to f")
         strbuf = output_buffer()
-        
+
         # output from the output functions within this module will be printed to strbuf
-        call_some_routine() 
+        call_some_routine()
         output_pop()
         eo("This prints to f again")
     output_pop()
@@ -44,7 +44,6 @@ import sys
 import inspect
 import traceback
 import logging
-import yaml
 import json
 
 from io import StringIO
@@ -53,6 +52,18 @@ from pprint import pformat
 from eyeo.stringify import stringify, stringify_value
 
 typerepresenters = {}
+
+try:
+    import yaml
+except:
+    class FakeYaml:
+        @classmethod
+        def dumps(cls, data, sort_keys=None, default_flow_style=None, indent=None, default_style=None, line_break=None):
+            # pylint: disable=unused-argument
+            msg("Warning - no yaml support - falling back to json format")
+            return json.dumps(data, sort_keys=sort_keys)
+
+    yaml = FakeYaml
 
 class GlobalLoggingInstance:
     """
@@ -84,7 +95,7 @@ def setup_logging():
 def register_type_representer(t, func):
     """
     Register a function that will act as a type representer for the specified type.
-    
+
     Parameters:
         t: the type
         func: the function that will be used to produce a representation for values of type t
@@ -115,7 +126,7 @@ def todo(message):
 def _init_level(name, defaultval=0):
     """
     Determine a default verbosity or debug level from the environment values.
-    Treats y,yes,on,true,t (upper or lower case) as 1, 
+    Treats y,yes,on,true,t (upper or lower case) as 1,
     and n,no,off,false,f (upper or lower case) as 0,
     otherwise will expect an int in string format.
 
@@ -148,7 +159,7 @@ DEBUG_REGEX = os.environ.get('DEBUG_REGEX', None)
 def set_debug_regex(pattern):
     """
     Set a regular expression that will select which debug lines should be displayed.
-    
+
     Parameters:
         pattern (str|regex): the pattern, or None
     """
@@ -161,10 +172,10 @@ def set_debug_regex(pattern):
 def increment_debug(amount=None):
     """
     Increment the global debug verbosity by 1 or by a specified amount.
-    
+
     Parameters:
         amount (int): the amount to increment the debug verbosity level by (default 1)
-    
+
     Returns:
         int: the new debug level
     """
@@ -178,10 +189,10 @@ def progname():
     """
     return the program name based on sys.argv[0] but with the directory path chopped off,
     and possibly the '.py' suffix chopped off (if present).
-    
+
     Parameters:
         (none)
-    
+
     Returns:
         str: the program name
     """
@@ -199,7 +210,7 @@ def scriptname():
 def increment_verbose(amount=None):
     """
     Increment the global verbosity by 1 or by a specified amount.
-    
+
     Parameters:
         amount (int): the amount to increment the verbosity level by (default 1)
 
@@ -215,7 +226,7 @@ def increment_verbose(amount=None):
 def get_verbose():
     """
     Return the current global verbosity level
-    
+
     Returns:
         int: the global verbosity level
     """
@@ -224,7 +235,7 @@ def get_verbose():
 def set_verbose(amount=1):
     """
     Set the current global verbosity level
-    
+
     Parameters:
         amount (int): the new level
     Returns:
@@ -237,7 +248,7 @@ def set_verbose(amount=1):
 def get_debug():
     """
     Return the current global debug verbosity level
-    
+
     Returns:
         int: the debug level
     """
@@ -246,7 +257,7 @@ def get_debug():
 def set_debug(amount=1):
     """
     Set the current global debug verbosity level
-    
+
     Parameters:
         amount (int): the new level
 
@@ -267,10 +278,10 @@ def output_add(fhandle):
     Set the current default output target filehandle for output routines in this module.
     This sets the output destination in a stack so that the prior output can be restored
     using the associated routine output_pop
-    
+
     Parameters:
         fhandle (file): the new output destination
-    
+
     Returns:
         file: the file handle that was passed in
     """
@@ -284,7 +295,7 @@ def output_buffer():
     Create a new string buffer in the output stack and return it. The new string buffer
     will be set as the current destination for output. See output_pop() to remove it when
     you are done and restore the prior output target.
-    
+
     Returns:
         StringIO: a StringIO object which is currently set as the output destination
     """
@@ -293,17 +304,17 @@ def output_buffer():
 def output_pop(print_to_upper=False):
     """
     Remove the current output destination from the stack of output targets.
-    If the current destination was a StringIO, its captured text and the length of that 
+    If the current destination was a StringIO, its captured text and the length of that
     will be returned also, and this can be automatically printed to the new output destination
     using the print_to_upper flag.
 
     Parameters:
-    
-        print_to_upper (bool): If true and the current output target is a string buffer, 
+
+        print_to_upper (bool): If true and the current output target is a string buffer,
             then any data that was captured in it, will be printed to the new output destination
             after the pop is performed.
-    
-    Returns: 
+
+    Returns:
          None | tuple(file, int, str): None, or a tuple of the removed file, length of any popped string buffer data, and any popped string buffer data
     """
     global output_stack, output_handle
@@ -340,12 +351,12 @@ def reopen_to(fhandle, path, mode):
     """
     close a filehandle and return a new one opened for the specified path and mode.
     example: sys.stdout = reopen_to(sys.stdout, "/tmp/log.txt", "w")
-    
+
     Parameters:
         fhandle (file): the file handle to close (may be None)
         path (str): the new path to open
         mode (str): the file open mode, ie "r", "w"
-    
+
     Returns:
         file: the new filehandle
     """
@@ -359,11 +370,11 @@ def reopen_to_devnull(fhandle, mode):
     """
     Close a filehandle and return a new one for /dev/null
     example: sys.stdout = reopen_to_devnull(sys.stdout, "w")
-    
+
     Parameters:
         fhandle (file): the file to close (may be None)
         mode (str): the mode to use when opening /dev/null (for example "r", or "rw")
-    
+
     Returns:
         file: the new /dev/null handle
     """
@@ -394,7 +405,7 @@ def eoind(first, *remainder, file=None, end=None, flush=None, joiner=None, start
 
 def quoted(val, quote=None, quote_if=None):
     """
-    Provide a pseudo-intelligently quoted version of a provided value 
+    Provide a pseudo-intelligently quoted version of a provided value
     - ie avoid quoting in some situations (such as empty strings or strings with no whitespace)
     and escape the quote character if it is present in the string.
 
@@ -438,7 +449,7 @@ def eocmd(*strs, **kwargs):
     """
     Output a command string list in a convenient manner for viewing a command.
     ie separate with spaces, quote each item if it is empty, contains spaces, or contains the quote character.
-    
+
     Parameters:
         kwargs (dict): see eo(). if quote_if is present, its value will be ignored.
     """
@@ -452,7 +463,7 @@ def pretty(data, style=None, sort_keys=None, indent=None):
     """
     pretty-print some data using some defaults which can be overridden.
     The default style is json.
-    
+
     Parameters:
         data: the data to print
         style (str) one of 'json', 'yaml', or None to accept the default
@@ -460,7 +471,7 @@ def pretty(data, style=None, sort_keys=None, indent=None):
         indent (str): the indentation to use
 
     Returns:
-        str: the formatted string. 
+        str: the formatted string.
     """
     if indent is None:
         indent = 4
@@ -473,8 +484,8 @@ def pretty(data, style=None, sort_keys=None, indent=None):
     else:
         return json.dumps(data, sort_keys=sort_keys, separators=(", ", " : "), indent=indent)
 
-def eo(*strs, file=None, end=None, flush=None, 
-            joiner=None, starter=None, indent=None, 
+def eo(*strs, file=None, end=None, flush=None,
+            joiner=None, starter=None, indent=None,
             style=None, fmt=None, quote=None, quote_if=None,
             nonestr=None, lf=None):
     """
@@ -589,9 +600,9 @@ def eo(*strs, file=None, end=None, flush=None,
 def eod(tag, o):
     """
     dump a data item. Prints the specified tag as an identifier, followed by the type of the data, and the data itself.
-    
+
     Parameters:
-        tag: a value to be printed before the data, like a name 
+        tag: a value to be printed before the data, like a name
         o: the object or data to print
     """
     eo(f"{tag} (type {type(o)})", { 'data': o } )
@@ -599,7 +610,7 @@ def eod(tag, o):
 def eodir(o):
     """
     print the type and dir() of an object
-    
+
     Parameters:
         o (object or data): the data to print
     """
@@ -619,7 +630,7 @@ def msgx(joiner, *args, **kwargs):
     """
     print some data items with a joiner string, but using stringify_value() to convert the items o strings
     see eo() for optional kwarg parameters
-    
+
     Parameters:
         joiner: the object or string to use to join items
         args: the items to join and print
@@ -633,7 +644,7 @@ def msg(*args, **kwargs):
     """
     msgx style printing but provide a default joiner of a single space ' '.
     See msgx() and eo().
-    
+
     Parameters:
         args: the items to print
         kwargs: the options for eo()
@@ -643,7 +654,7 @@ def msg(*args, **kwargs):
 def warnmsg(*args, **kwargs):
     """
     Print a warning msg (prefix with "WARNING:")
-    
+
     Parameters:
         see msg() or eo()
     """
@@ -659,7 +670,7 @@ def msgl(*args, **kwargs):
     """
     msgx style using a linefeed as the item separator.
     ie print items on separate lines.
-    
+
     Parameters:
         See msgx() and/or eo()
     """
@@ -668,7 +679,7 @@ def msgl(*args, **kwargs):
 def err(*args, **kwargs):
     """
     Print an error msg (prefix with "ERROR:")
-    
+
     Parameters:
         see msg() or eo()
     """
@@ -683,7 +694,7 @@ def errmsg(*args, **kwargs):
 def info(*args, **kwargs):
     """
     Print an info msg (prefix with "INFO:")
-    
+
     Parameters:
         see msg() or eo()
     """
@@ -812,7 +823,7 @@ def dbgdump(item):
 def read_file(path):
     """
     Read the specified file and return the contents
-    
+
     Returns:
         str: the file contents, or None on error
     """
@@ -832,7 +843,7 @@ def read_file_lines(path):
 
     Parameters:
         path (str): the path of the file to read
-    
+
     Returns:
         list[str] or None: the lines from the file, or None
     """
@@ -849,7 +860,7 @@ def read_file_lines(path):
 def write_file(path, contents):
     """
     write some text contents to a file
-    
+
     Parameters:
         path: the filesystem path
         contents: the text to write to the file
@@ -877,7 +888,7 @@ def os_path_splitall(path, support_unc=False):
 
     Parameters:
         path (str): The filesystem path
-    
+
     Returns:
         list: a list of the path components
     """
@@ -923,7 +934,7 @@ def indented(*items, indent=None, indent_first=False):
     Parameters:
         items: an iterable
         indent: the object or text to use as the indent at the start of each line
-    
+
     Returns:
         The text of the lines, combined with indentation
     """
@@ -948,7 +959,7 @@ def isatty():
 def tb(file=None):
     """
     shortcut for traceback.print_stack() however with a default file output of sys.stderr
-    
+
     Parameters:
         file (file): a file or None. if specified, use this file, otherwise use sys.stderr.
     """
