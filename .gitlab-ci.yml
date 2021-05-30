@@ -57,7 +57,13 @@ docs:
   script:
     - python3 -m venv venv
     - . venv/bin/activate
-    - pip install pdoc
-    - pdoc $PACKAGE_NAME
+    - pip install pdoc3
+    - mkdir -p docs
+    - PYTHONPATH=src pdoc $PACKAGE_NAME > README_api.md
+    - PYTHONPATH=src pdoc --html -o docs/html $PACKAGE_NAME
+  artifacts:
+    paths:
+      - README_api.md
+      - docs/html/$(PACKAGE_NAME)/**/*.*
   tags:
     - container
