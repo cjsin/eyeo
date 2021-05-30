@@ -50,6 +50,8 @@ run-examples:
     - python3 -m venv venv
     - . venv/bin/activate
     - pip list
+    - pip install dist/*.whl
+    - pip list
     - python3 -m eyeo.examples
     - python3 -m eyeo.stringify_examples
   tags:
@@ -60,8 +62,11 @@ docs:
   script:
     - python3 -m venv venv
     - . venv/bin/activate
+    - pip list
     - pip install pdoc3
     - mkdir -p docs
+    - pip install dist/*.whl
+    - pip list
     - PYTHONPATH=src pdoc $PACKAGE_NAME > README_api.md
     - PYTHONPATH=src pdoc --html -o docs/html $PACKAGE_NAME
   artifacts:
