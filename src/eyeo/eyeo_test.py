@@ -1,4 +1,9 @@
 #!/bin/bash
+
+__pdoc__ = {
+    'pytest': False
+}
+
 import pytest
 
 import eyeo
