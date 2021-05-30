@@ -63,6 +63,7 @@ docs:
     - python3 -m venv venv
     - . venv/bin/activate
     - pip list
+    - ls -al ${CI_PROJECT_DIR}/venv/lib/python3.9/site-packages/pdoc3-0.9.2-py3.9.egg-info/requires.txt || true
     - pip install pdoc3 pytest
     - mkdir -p docs
     - pip install dist/*.whl
