@@ -63,7 +63,7 @@ docs:
     - python3 -m venv venv
     - . venv/bin/activate
     - pip list
-    - pip install pdoc3
+    - pip install pdoc3 pytest
     - mkdir -p docs
     - pip install dist/*.whl
     - pip list
