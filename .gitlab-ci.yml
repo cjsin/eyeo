@@ -14,17 +14,19 @@ before_script:
   - env| egrep 'CI_|PIP_'
 
 stages:
+  - prep
   - build
   - install
   - test
   - docs
+  - pages
 
 build:
   stage: build
   script:
     - python3 -m venv venv
     - . venv/bin/activate
-    - pip install build
+    - pip install --upgrade pip build wheel setuptools
     - python3 -m build
   artifacts:
     paths:
@@ -37,6 +39,7 @@ test-install:
   script:
     - python3 -m venv venv
     - . venv/bin/activate
+    - pip list
     - pip install dist/*.whl
     - pip list
   tags:
@@ -55,27 +58,30 @@ run-examples:
   tags:
     - container
 
-docs:
+.docs-stage:
   stage: docs
   script:
     - python3 -m venv venv
     - . venv/bin/activate
     - pip list
-    - ls -al venv/lib/python3*/site-packages/pdoc3-*-py*.egg-info/requires.txt || true
-    - pip install --upgrade pip
-    - pip install --upgrade wheel setuptools
-    - pip install pdoc3 || true
-    - ls -alR venv/lib/python*/*-packages/pdoc3-*-py*egg* || true
-    - chmod -R u+rwX venv/
-    - pip install pytest
-    - mkdir -p docs
+    - pip install pytest pdoc3
     - pip install dist/*.whl
     - pip list
-    - PYTHONPATH=src pdoc $PACKAGE_NAME > README_api.md
-    - PYTHONPATH=src pdoc --html -o docs/html $PACKAGE_NAME
+    - mkdir -p public
+    - PYTHONPATH=src pdoc $PACKAGE_NAME > public/README_api.md
+    - PYTHONPATH=src pdoc --html -o public/html $PACKAGE_NAME
   artifacts:
     paths:
-      - README_api.md
-      - docs/html/$(PACKAGE_NAME)/**/*.*
+      - public
   tags:
     - container
+
+docs:
+  extends: .docs-stage
+  except:
+    - master
+    
+pages:
+  extends: .docs-stage
+  only:
+    - master
