@@ -30,8 +30,6 @@ stages:
   - test
   - docs
 
-tags:
-  - container
 
 prep:
   extends: .cache-creator
@@ -44,8 +42,8 @@ prep:
     - /usr/bin/python3 -m venv venv
     - . venv/bin/activate
     - pip install --upgrade pip build wheel setuptools
-tags:
-  - container
+  tags:
+    - container
 
 build:
   extends: .cache-user
