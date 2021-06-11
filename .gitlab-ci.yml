@@ -4,19 +4,20 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   PACKAGE_NAME: eyeo
 
-.cache:
-  cache:
+.cache-paths: &.cache-paths
     paths:
       - .cache/pip
       - venv
 
 .cache-user:
-  extends: .cache
-  policy: pull
+  cache:
+    <<: *.cache-paths
+    policy: pull
 
 .cache-creator:
-  extends: .cache
-  policy: push
+  cache:
+    <<: *.cache-paths
+    policy: push
 
 before_script:
   - /usr/bin/python3 -V  # Print out python version for debugging
