@@ -5,9 +5,11 @@ variables:
   PACKAGE_NAME: eyeo
 
 cache:
+  cache:
+    policy: pull
   paths:
-    - .cache/pip
-    - venv-base/
+    - .cache/pip/
+    - venv/
 
 before_script:
   - /usr/bin/python3 -V  # Print out python version for debugging
@@ -22,22 +24,20 @@ stages:
 
 prep:
   stage: prep
+  cache:
+    policy: push
   script:
     - which python3
     - command -v python3
     - env | egrep PY || true
     - unset PYTHONPATH
-    - rm -rf venv venv-base
-    - ls -al venv venv-base || true
     - /usr/bin/python3 -m venv venv
     - . venv/bin/activate
     - pip install --upgrade pip build wheel setuptools
-    - mv venv venv-base
 
 build:
   stage: build
   script:
-    - cp -a venv-base venv
     - . venv/bin/activate
     - python3 -m build
   artifacts:
@@ -49,7 +49,6 @@ build:
 test-install:
   stage: install
   script:
-    - cp -a venv-base venv
     - . venv/bin/activate
     - pip list
     - pip install dist/*.whl
@@ -60,7 +59,6 @@ test-install:
 run-examples:
   stage: test
   script:
-    - cp -a venv-base venv
     - . venv/bin/activate
     - pip list
     - pip install dist/*.whl
@@ -73,7 +71,6 @@ run-examples:
 .docs-stage:
   stage: docs
   script:
-    - cp -a venv-base venv
     - . venv/bin/activate
     - pip list
     - pip install pytest pdoc3
