@@ -5,8 +5,7 @@ variables:
   PACKAGE_NAME: eyeo
 
 cache:
-  cache:
-    policy: pull
+  policy: pull
   paths:
     - .cache/pip/
     - venv/
