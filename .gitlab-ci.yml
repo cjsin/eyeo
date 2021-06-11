@@ -23,6 +23,10 @@ stages:
 prep:
   stage: prep
   script:
+    - which python3
+    - command -v python3
+    - env | egrep PY
+    - unset PYTHONPATH
     - /usr/bin/python3 -m venv venv
     - . venv/bin/activate
     - pip install --upgrade pip build wheel setuptools
