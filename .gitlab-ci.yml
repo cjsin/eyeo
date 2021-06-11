@@ -65,7 +65,7 @@ docs:
     - pip install --upgrade pip
     - pip install --upgrade wheel setuptools
     - pip install pdoc3 || true
-    - ls -alR venv/lib/python*/site-packages/pdoc3-*-py*.egg-info
+    - ls -alR venv/lib/python*/*-packages/pdoc3-*-py*egg* || true
     - chmod -R u+rwX venv/
     - pip install pytest
     - mkdir -p docs
