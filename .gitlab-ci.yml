@@ -7,7 +7,7 @@ variables:
 cache:
   paths:
     - .cache/pip
-    - venv/
+    - venv-base/
 
 before_script:
   - python -V  # Print out python version for debugging
@@ -19,14 +19,14 @@ stages:
   - install
   - test
   - docs
-  - pages
 
 prep:
   stage: prep
   script:
-    - python3 -m venv venv-base
+    - python3 -m venv venv
     - . venv/bin/activate
     - pip install --upgrade pip build wheel setuptools
+    - mv venv venv-base
   
 build:
   stage: build
