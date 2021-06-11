@@ -21,12 +21,18 @@ stages:
   - docs
   - pages
 
+prep:
+  stage: prep
+  script:
+    - python3 -m venv venv-base
+    - . venv/bin/activate
+    - pip install --upgrade pip build wheel setuptools
+  
 build:
   stage: build
   script:
-    - python3 -m venv venv
+    - cp -a venv-base venv
     - . venv/bin/activate
-    - pip install --upgrade pip build wheel setuptools
     - python3 -m build
   artifacts:
     paths:
@@ -37,7 +43,7 @@ build:
 test-install:
   stage: install
   script:
-    - python3 -m venv venv
+    - cp -a venv-base venv
     - . venv/bin/activate
     - pip list
     - pip install dist/*.whl
@@ -48,7 +54,7 @@ test-install:
 run-examples:
   stage: test
   script:
-    - python3 -m venv venv
+    - cp -a venv-base venv
     - . venv/bin/activate
     - pip list
     - pip install dist/*.whl
@@ -61,7 +67,7 @@ run-examples:
 .docs-stage:
   stage: docs
   script:
-    - python3 -m venv venv
+    - cp -a venv-base venv
     - . venv/bin/activate
     - pip list
     - pip install pytest pdoc3
