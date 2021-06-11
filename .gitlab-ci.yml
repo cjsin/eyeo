@@ -4,19 +4,19 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   PACKAGE_NAME: eyeo
 
-.cache-paths: &.cache-paths
+.cache-paths: &cache-paths
     paths:
       - .cache/pip
       - venv
 
 .cache-user:
   cache:
-    <<: *.cache-paths
+    <<: *cache-paths
     policy: pull
 
 .cache-creator:
   cache:
-    <<: *.cache-paths
+    <<: *cache-paths
     policy: push
 
 before_script:
