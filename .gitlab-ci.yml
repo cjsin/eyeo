@@ -35,11 +35,11 @@ prep:
   extends: .cache-creator
   stage: prep
   script:
+    #- apt-get install python3-venv
     - which python3
     - command -v python3
     - env | egrep PY || true
-    - unset PYTHONPATH
-    - /usr/bin/python3 -m venv venv
+    - python3 -m venv venv
     - . venv/bin/activate
     - pip install --upgrade pip build wheel setuptools
   tags:
