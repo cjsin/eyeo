@@ -24,7 +24,6 @@ build:
   script:
     - python3 -m venv venv
     - . venv/bin/activate
-    #- pip install --upgrade pip
     - pip install build
     - python3 -m build
   artifacts:
@@ -38,7 +37,6 @@ test-install:
   script:
     - python3 -m venv venv
     - . venv/bin/activate
-    #- pip install --upgrade pip
     - pip install dist/*.whl
     - pip list
   tags:
