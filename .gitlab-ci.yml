@@ -61,10 +61,13 @@ docs:
     - python3 -m venv venv
     - . venv/bin/activate
     - pip list
-    - ls -al ${CI_PROJECT_DIR}/venv/lib/python3*/site-packages/pdoc3-*-py*.egg-info/requires.txt || true
+    - ls -al venv/lib/python3*/site-packages/pdoc3-*-py*.egg-info/requires.txt || true
     - pip install --upgrade pip
-    - pip install wheel
-    - pip install pdoc3 pytest
+    - pip install --upgrade wheel setuptools
+    - pip install pdoc3 || true
+    - ls -alR venv/lib/python*/site-packages/pdoc3-*-py*.egg-info
+    - chmod -R u+rwX venv/
+    - pip install pytest
     - mkdir -p docs
     - pip install dist/*.whl
     - pip list
