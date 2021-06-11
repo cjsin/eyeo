@@ -10,7 +10,7 @@ cache:
     - venv-base/
 
 before_script:
-  - python -V  # Print out python version for debugging
+  - /usr/bin/python3 -V  # Print out python version for debugging
   - env| egrep 'CI_|PIP_'
 
 stages:
@@ -23,7 +23,7 @@ stages:
 prep:
   stage: prep
   script:
-    - python3 -m venv venv
+    - /usr/bin/python3 -m venv venv
     - . venv/bin/activate
     - pip install --upgrade pip build wheel setuptools
     - mv venv venv-base
