@@ -4,11 +4,19 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   PACKAGE_NAME: eyeo
 
-cache:
+.cache:
+  cache:
+    paths:
+      - .cache/pip
+      - venv
+
+.cache-user:
+  extends: .cache
   policy: pull
-  paths:
-    - .cache/pip/
-    - venv/
+
+.cache-creator:
+  extends: .cache
+  policy: push
 
 before_script:
   - /usr/bin/python3 -V  # Print out python version for debugging
@@ -22,9 +30,8 @@ stages:
   - docs
 
 prep:
+  extends: .cache-creator
   stage: prep
-  cache:
-    policy: push
   script:
     - which python3
     - command -v python3
@@ -35,6 +42,7 @@ prep:
     - pip install --upgrade pip build wheel setuptools
 
 build:
+  extends: .cache-user
   stage: build
   script:
     - . venv/bin/activate
@@ -46,6 +54,7 @@ build:
     - container
 
 test-install:
+  extends: .cache-user
   stage: install
   script:
     - . venv/bin/activate
@@ -56,6 +65,7 @@ test-install:
     - container
 
 run-examples:
+  extends: .cache-user
   stage: test
   script:
     - . venv/bin/activate
@@ -68,6 +78,7 @@ run-examples:
     - container
 
 .docs-stage:
+  extends: .cache-user
   stage: docs
   script:
     - . venv/bin/activate
