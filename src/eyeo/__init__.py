@@ -1,3 +1,5 @@
+# pylint: disable=missing-function-docstring,unused-wildcard-import,line-too-long,trailing-newlines,missing-module-docstring,wildcard-import,invalid-name
+# pylint: disable=too-many-lines
 """
 
 # A module for simplifying regular basic output printing in common situations
@@ -54,18 +56,23 @@ from eyeo.stringify import stringify, stringify_value
 typerepresenters = {}
 
 try:
+    # pylint: disable=import-error
+    # pylint: disable=bare-except
     import yaml
 except:
     class FakeYaml:
+        # pylint: disable=too-few-public-methods
+        """ fake yaml class to substitute for missing (optional) yaml module """
         @classmethod
         def dumps(cls, data, sort_keys=None, default_flow_style=None, indent=None, default_style=None, line_break=None):
-            # pylint: disable=unused-argument
+            # pylint: disable=unused-argument,too-many-arguments
             msg("Warning - no yaml support - falling back to json format")
             return json.dumps(data, sort_keys=sort_keys)
 
     yaml = FakeYaml
 
 class GlobalLoggingInstance:
+    # pylint: disable=too-few-public-methods
     """
     A global logging instance, set up by setup_logging below
     """
@@ -139,22 +146,35 @@ def _init_level(name, defaultval=0):
     """
     if name not in os.environ:
         return defaultval
-    else:
-        val = os.environ.get(name, '')
-        if val in [ None, ""]:
-            return defaultval
-        elif val.isdigit():
-            return int(val)
-        elif val.lower() in [ 'y', 'yes', 'on', 'true', 't' ]:
-            return 1
-        elif val.lower() in [ 'n', 'no', 'off', 'false', 'f' ]:
-            return 0
-        else:
-            return defaultval
 
-VERBOSE = _init_level('VERBOSE', 0)
-DEBUG = _init_level('DEBUG', 0)
-DEBUG_REGEX = os.environ.get('DEBUG_REGEX', None)
+    val = os.environ.get(name, '')
+    if val in [ None, ""]:
+        return defaultval
+    if val.isdigit():
+        return int(val)
+    if val.lower() in [ 'y', 'yes', 'on', 'true', 't' ]:
+        return 1
+    if val.lower() in [ 'n', 'no', 'off', 'false', 'f' ]:
+        return 0
+    return defaultval
+
+class Globals:
+    """ Scoping class for globals """
+    # pylint: disable=too-few-public-methods
+    VERBOSE = 0
+    DEBUG = 0
+    DEBUG_REGEX = None
+    # used by output_add, output_pop and 'eo'
+    output_stack = []
+    output_handle = None
+
+Globals.VERBOSE = _init_level('VERBOSE', 0)
+Globals.DEBUG = _init_level('DEBUG', 0)
+Globals.DEBUG_REGEX = os.environ.get('DEBUG_REGEX', None)
+
+globals()['VERBOSE'] = Globals.VERBOSE
+globals()['DEBUG'] = Globals.DEBUG
+globals()['DEBUG_REGEX'] = Globals.DEBUG_REGEX
 
 def set_debug_regex(pattern):
     """
@@ -163,11 +183,10 @@ def set_debug_regex(pattern):
     Parameters:
         pattern (str|regex): the pattern, or None
     """
-    global DEBUG_REGEX
     if pattern is None or pattern == '':
-        DEBUG_REGEX = None
+        Globals.DEBUG_REGEX = None
     else:
-        DEBUG_REGEX = re.compile(pattern)
+        Globals.DEBUG_REGEX = re.compile(pattern)
 
 def increment_debug(amount=None):
     """
@@ -179,11 +198,10 @@ def increment_debug(amount=None):
     Returns:
         int: the new debug level
     """
-    global DEBUG
     if amount is None:
         amount = 1
-    DEBUG += amount
-    return DEBUG
+    Globals.DEBUG += amount
+    return Globals.DEBUG
 
 def progname():
     """
@@ -217,11 +235,10 @@ def increment_verbose(amount=None):
     Returns:
         int: the new level
     """
-    global VERBOSE
     if amount is None:
         amount = 1
-    VERBOSE += amount
-    return VERBOSE
+    Globals.VERBOSE += amount
+    return Globals.VERBOSE
 
 def get_verbose():
     """
@@ -230,7 +247,7 @@ def get_verbose():
     Returns:
         int: the global verbosity level
     """
-    return VERBOSE
+    return Globals.VERBOSE
 
 def set_verbose(amount=1):
     """
@@ -241,9 +258,8 @@ def set_verbose(amount=1):
     Returns:
         int: the new level
     """
-    global VERBOSE
-    VERBOSE = amount
-    return VERBOSE
+    Globals.VERBOSE = amount
+    return Globals.VERBOSE
 
 def get_debug():
     """
@@ -252,7 +268,7 @@ def get_debug():
     Returns:
         int: the debug level
     """
-    return DEBUG
+    return Globals.DEBUG
 
 def set_debug(amount=1):
     """
@@ -264,14 +280,8 @@ def set_debug(amount=1):
     Returns:
         int: the new level
     """
-    global DEBUG
-    DEBUG = amount
-    return DEBUG
-
-
-# used by output_add, output_pop and 'eo'
-output_stack = []
-output_handle = None
+    Globals.DEBUG = amount
+    return Globals.DEBUG
 
 def output_add(fhandle):
     """
@@ -285,9 +295,8 @@ def output_add(fhandle):
     Returns:
         file: the file handle that was passed in
     """
-    global output_stack, output_handle
-    output_stack.append(fhandle)
-    output_handle = fhandle
+    Globals.output_stack.append(fhandle)
+    Globals.output_handle = fhandle
     return fhandle
 
 def output_buffer():
@@ -317,21 +326,21 @@ def output_pop(print_to_upper=False):
     Returns:
          None | tuple(file, int, str): None, or a tuple of the removed file, length of any popped string buffer data, and any popped string buffer data
     """
-    global output_stack, output_handle
-    if not output_stack:
+    if not Globals.output_stack:
+        print(" output_pop is returning None because there is no output stack", file=sys.stderr)
         return None
 
     len_value = None
     data_value = None
-    popped = output_stack.pop()
-    ret = output_handle
+    popped = Globals.output_stack.pop()
+    ret = Globals.output_handle
     if ret != popped:
         print("ERROR: output stack got out of sync with expected output handle", file=sys.stderr)
 
-    if output_stack:
-        output_handle = output_stack[-1]
+    if Globals.output_stack:
+        Globals.output_handle = Globals.output_stack[-1]
     else:
-        output_handle = None
+        Globals.output_handle = None
 
     if isinstance(ret, StringIO):
         ret.seek(0)
@@ -339,12 +348,13 @@ def output_pop(print_to_upper=False):
         len_value = len(data_value)
     if print_to_upper:
         if data_value:
-            eo(data_value)
+            eo(data_value, end="")
         else:
-            print(f"Popped handle is of type ({type(ret)}), cannot print_to_upper", file=sys.stderr)
-            #pass
-    ret.flush()
+            #print(f"Popped handle is of type ({type(ret)}), cannot print_to_upper", file=sys.stderr)
+            pass
 
+    ret.flush()
+    #print(f" output_pop is returning ret={ret}, len_value={len_value}, data_value={data_value}", file=sys.stderr)
     return (ret, len_value, data_value)
 
 def reopen_to(fhandle, path, mode):
@@ -360,6 +370,7 @@ def reopen_to(fhandle, path, mode):
     Returns:
         file: the new filehandle
     """
+    # pylint: disable=consider-using-with
     newhandle = open(path, mode)
     if fhandle:
         fhandle.flush()
@@ -423,11 +434,13 @@ def quoted(val, quote=None, quote_if=None):
     """
     if quote is None:
         return val
-    elif quote_if is None or quote_if == "":
+
+    if quote_if is None or quote_if == "":
         return val
 
     needs_quoting = False
     conditions = quote_if.split(",")
+    conditions = [q[0] for q in conditions if q]
     if "e" in conditions and val == "":
         return quote + quote
 
@@ -481,13 +494,13 @@ def pretty(data, style=None, sort_keys=None, indent=None):
         sort_keys = True
     if style == 'yaml':
         return yaml.dump(data, sort_keys=sort_keys, default_flow_style=False, indent=indent, default_style=None, line_break="\n")
-    else:
-        return json.dumps(data, sort_keys=sort_keys, separators=(", ", " : "), indent=indent)
+    return json.dumps(data, sort_keys=sort_keys, separators=(", ", " : "), indent=indent)
 
 def eo(*strs, file=None, end=None, flush=None,
             joiner=None, starter=None, indent=None,
             style=None, fmt=None, quote=None, quote_if=None,
-            nonestr=None, lf=None):
+            nonestr=None, lf=None, _debug=None):
+    # pylint: disable=too-many-locals
     """
     example usage:
     # basic usage, will write to stderr
@@ -525,17 +538,46 @@ def eo(*strs, file=None, end=None, flush=None,
 
     """
 
+    # pylint: disable=too-many-statements,too-many-branches
+
+    strs = list(strs)
+
+    # Support this style:
+    #    eo("a format {} with {}", "string", "data")
+    # as long as no other contradictory options were passed
+    # pylint: disable=too-many-boolean-expressions
+    if (fmt is None
+        and strs
+        and "{}" in strs[0]
+        and strs[0].count("{}") == len(strs) -1
+        and indent is None and joiner is None and style is None):
+        fmt = strs.pop(0)
+        if file is None:
+            file = Globals.output_handle if Globals.output_handle else sys.stderr
+        print(fmt.format(*strs) , file=file, end=end)
+        if flush:
+            file.flush()
+        return
+
     if nonestr is None:
         nonestr = "(None)"
     if lf is None:
-        lf = "\n"
+        lf = os.linesep
 
     if style is None:
         style = 'str'
+
+    #if _debug:
+    #    print(f"quote={quote}, quote_if={quote_if}")
+
+    if quote_if is not None and quote is None:
+        quote = "'"
+    #if _debug:
+    #    print(f"quote={quote}, quote_if={quote_if}")
     if quote_if is None:
         quote_if = 'empty,space,quote'
-
-    global output_stack, output_handle
+    if _debug:
+        print(f"quote={quote}, quote_if={quote_if}")
 
     if joiner is None:
         joiner = " "
@@ -576,8 +618,15 @@ def eo(*strs, file=None, end=None, flush=None,
                 ret = pretty(x, style='yaml')
             else:
                 ret = str(x)
+        #if _debug:
+        #    print("Formatting x")
         if quote:
+            orig = ret
             ret = quoted(ret, quote=quote, quote_if=quote_if)
+            if _debug:
+                print(f"ret={ret} for quoted(\"{orig}\",quote=\"{quote}\", quote_if=\"{quote_if}\"")
+        elif _debug:# and quote_if:
+            print("NOT using quoted(), quote=" + str(quote) + " and quote_if=" + str(quote_if), file=sys.stderr)
         return ret
 
     if len(strs) == 1 and isinstance(strs[0], list):
@@ -590,7 +639,7 @@ def eo(*strs, file=None, end=None, flush=None,
 
     line = prefix + joiner.join(strs)
     if file is None:
-        file = output_handle if output_handle else sys.stderr
+        file = Globals.output_handle if Globals.output_handle else sys.stderr
 
     print(line , file=file, end=end)
 
@@ -732,8 +781,7 @@ def verb(*args, **kwargs):
         args:       see msg()
         kwargs:     see msg()
     """
-    global VERBOSE
-    if VERBOSE:
+    if Globals.VERBOSE:
         msg(*args, **kwargs)
 
 def vverb(level, *args, **kwargs):
@@ -745,8 +793,7 @@ def vverb(level, *args, **kwargs):
         args:       see msg()
         kwargs:     see msg()
     """
-    global VERBOSE
-    if VERBOSE >= level:
+    if Globals.VERBOSE >= level:
         msg(*args, **kwargs)
 
 def dbgexit(*args):
@@ -788,17 +835,15 @@ def dbgmsg(*args):
     Parameters:
         args: the items to print
     """
-    global DEBUG
-    if DEBUG:
+    if Globals.DEBUG:
         caller = inspect.stack()[1]
         func = caller.function
         line = caller.lineno
         filename = os.path.basename(caller.filename)
         prog = progname()
         text = f"{prog}:{filename}.{func}:{line}:" + " ".join([str(x) for x in args])
-        global DEBUG_REGEX
-        if DEBUG_REGEX is not None:
-            if not re.match(DEBUG_REGEX, text):
+        if Globals.DEBUG_REGEX is not None:
+            if not re.match(Globals.DEBUG_REGEX, text):
                 return
         msg(text)
 
@@ -810,8 +855,7 @@ def dbgdump(item):
     Parameters:
         item: the item to print
     """
-    global DEBUG
-    if DEBUG:
+    if Globals.DEBUG:
         caller = inspect.stack()[1]
         func = caller.function
         line = caller.lineno
@@ -828,10 +872,11 @@ def read_file(path):
         str: the file contents, or None on error
     """
     try:
+        # pylint: disable=bare-except
         with open(path, 'r'):
             return path.read()
     except:
-        if VERBOSE:
+        if Globals.VERBOSE:
             traceback.print_exc()
         else:
             eo(f"Failed reading file: {path}")
@@ -848,10 +893,11 @@ def read_file_lines(path):
         list[str] or None: the lines from the file, or None
     """
     try:
+        # pylint: disable=bare-except
         with open(path, 'r'):
             return path.readlines()
     except:
-        if VERBOSE:
+        if Globals.VERBOSE:
             traceback.print_exc()
         else:
             eo(f"Failed reading file: {path}")
@@ -869,18 +915,19 @@ def write_file(path, contents):
       bool:   True on success, False on failure
     """
     try:
+        # pylint: disable=bare-except
         with open(path, 'w') as f:
             print(contents, file=f)
             return True
     except:
-        if VERBOSE:
+        if Globals.VERBOSE:
             traceback.print_exc()
         else:
             eo(f"Failed writing file: {path}")
         return False
 
-
 def os_path_splitall(path, support_unc=False):
+    # pylint: disable=too-many-return-statements
     """
     Helper for the all-around shitness of os.path, which can
     only split /a/big/long/path into (/a/big/long, path)
@@ -893,16 +940,17 @@ def os_path_splitall(path, support_unc=False):
         list: a list of the path components
     """
     msg(f"os_path_splitall '{path}'")
+
     if path is None:
         return None
+
     if path == "":
         return None
 
     if len(path) > 1 and re.match(r'^[/]{2,}$', path):
         if support_unc:
             return ['//']
-        else:
-            return ['/']
+        return ['/']
 
     # if not support_unc:
     #     # os.path.normpath leaves '//' (does not normalise it)
@@ -916,16 +964,19 @@ def os_path_splitall(path, support_unc=False):
     #path = npath
     if path == '/':
         return ['/']
+
     split = os.path.split(path)
     if split[0] == "" and split[1] == "":
         return []
-    elif split[1] == "":
+
+    if split[1] == "":
         msg(f"0='{split[0]}', 1='{split[1]}'")
         return os_path_splitall(split[0], support_unc=support_unc)
-    elif split[0] == "":
+
+    if split[0] == "":
         return [split[1]]
-    else:
-        return os_path_splitall(split[0], support_unc=support_unc) + [split[1]]
+
+    return os_path_splitall(split[0], support_unc=support_unc) + [split[1]]
 
 def indented(*items, indent=None, indent_first=False):
     """

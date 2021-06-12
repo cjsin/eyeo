@@ -1,5 +1,7 @@
+# pylint: disable=missing-function-docstring,unused-wildcard-import,line-too-long,trailing-newlines,missing-module-docstring,wildcard-import,invalid-name
+
 """
-compact string dumper for objects intended to 'kind of' show the object, ie show enough of it to show what it is, 
+compact string dumper for objects intended to 'kind of' show the object, ie show enough of it to show what it is,
 however prevent gigantic dumps of text through depth limits and string ellipsis
 """
 
@@ -11,6 +13,7 @@ def is_obj(x):
       bool: True if the object has __dict__ attribute, otherwise False
     """
     try:
+        # pylint: disable=bare-except
         getattr(x, '__dict__')
         return True
     except:
@@ -55,6 +58,7 @@ def _stringify(v, maxDepth=None, maxItems=-1, maxStrlen=-1, callingDepth=0, recu
     Returns:
         tuple(depth:int, str): the depth (explored) of the structure and the string representation of the data
     """
+    # pylint: disable=too-many-return-statements,too-many-arguments
     if v is None:
         return ( 1, "(None)" )
     if recursionMap is None:
@@ -71,20 +75,19 @@ def _stringify(v, maxDepth=None, maxItems=-1, maxStrlen=-1, callingDepth=0, recu
 
     if t in [list, tuple]:
         return _stringify_array(v, maxDepth, maxItems, maxStrlen, callingDepth, recursionMap)
-    elif t in [dict] or 'AttrDict' in str(t):
+    if t in [dict] or 'AttrDict' in str(t):
         return _stringify_hash(v, maxDepth, maxItems, maxStrlen, callingDepth, recursionMap)
-    elif 'Gtk' in r or 'Gdk' in r or 'Glib' in r:
+    if 'Gtk' in r or 'Gdk' in r or 'Glib' in r:
         return (1,"(Gtk-object)")
-    elif isinstance(v, str):
+    if isinstance(v, str):
         return (1, v)
-    elif is_obj(v):
+    if is_obj(v):
         d = dict(v.__dict__)
         (depth, result) = _stringify(d, maxDepth, maxItems, maxStrlen, callingDepth, recursionMap)
         return (depth, r + result)
-    elif callable(v):
+    if callable(v):
         return (1,"(callable)")
-    else:
-        return (1, str(v))
+    return (1, str(v))
 
 def stringify_array(v,
                     maxDepth=None,
@@ -110,6 +113,7 @@ def _stringify_array(v,
                     maxStrlen=-1,
                     callingDepth=0,
                     recursionMap=None):
+    # pylint: disable=too-many-arguments
     """
     Private implementation of stringify_array()
 
@@ -190,6 +194,7 @@ def _stringify_hash(
         maxStrlen=-1,
         callingDepth=0,
         recursionMap=None):
+    # pylint: disable=too-many-arguments,too-many-locals
     """
     Private implementation for stringify_hash(), with extra parameters for internal use only.
 
@@ -245,7 +250,7 @@ def _stringify_hash(
 def dump(item):
     """
     Use stringify_value() to dump an item, with some defaults.
-    
+
     Parameters:
         item: the data to convert to string
     """

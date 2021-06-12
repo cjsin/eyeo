@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/bin/env python3
+# pylint: disable=missing-function-docstring,unused-wildcard-import,line-too-long,trailing-newlines,missing-module-docstring,wildcard-import,invalid-name
 
 __pdoc__ = {
     'pytest': False
@@ -9,15 +10,22 @@ import pytest
 import eyeo
 from eyeo import *
 
+def endl(s):
+    """ return the string with a line ending appended """
+    return s + os.linesep
+
 def test_setup_logging(capsys):
     assert capsys.readouterr().err == ""
 
 def test_register_type_representer(capsys):
     class ExampleObj:
+        """ example object class for testing the representer """
+        # pylint: disable=too-few-public-methods
         def __init__(self, value=None):
             self.value = value
 
     def represent_ExampleObj(o):
+        # pylint: disable=invalid-name
         return str(o.value)
 
     # pylint: disable=comparison-with-callable
@@ -118,24 +126,27 @@ def test_output_buffer(capsys):
 
 # this one tested by test_output_buffer
 def test_output_pop():
-    pass
+    msg("Unimplemented test")
 
-def test_reopen_to(capsys):
-    pass
+def test_reopen_to():
+    msg("Unimplemented test")
 
-def test_reopen_to_devnull(capsys):
-    pass
+def test_reopen_to_devnull():
+    msg("Unimplemented test")
 
 def test_eoind(capsys):
     eoind("data:", "a","b",1,2,3, indent=" :")
     assert capsys.readouterr().err == "data:\n :a\n :b\n :1\n :2\n :3\n"
 
-def test_quoted(capsys):
+def test_quoted():
     assert quoted("a") == "a"
     assert quoted("x", quote='"', quote_if="a") == '"x"'
     assert quoted("a b", quote="'") == "a b"
     assert quoted("a b", quote="'", quote_if="s") == "'a b'"
+    assert quoted("a b", quote="'", quote_if="space") == "'a b'"
     assert quoted("a'b", quote="'", quote_if="q") == "'a\\'b'"
+    assert quoted("", quote="'", quote_if="space,empty") == "''"
+    assert quoted("a b", quote="'", quote_if="space,empty") == "'a b'"
 
     assert quoted("") == ""
     assert quoted("",quote='"', quote_if="e") == '""'
@@ -151,6 +162,10 @@ def test_pretty(capsys):
 
 def test_eo(capsys):
     assert capsys.readouterr().err == ""
+
+def test_eo_firstformat(capsys):
+    eo("This {} an {}.", "is", "example")
+    assert capsys.readouterr().err == endl("This is an example.")
 
 def test_eod(capsys):
     assert capsys.readouterr().err == ""
