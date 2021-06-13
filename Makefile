@@ -46,8 +46,11 @@ version:
 	@echo Wheel:   $(DISTWHEEL)
 	@echo Sources: $(SOURCES)
 
+PYLINT_DISABLED = \
+    -d too-many-instance-attributes,line-too-long
+
 lint: venv
-	$(WITH_VENV) pylint $(SRC)
+	$(WITH_VENV) pylint $(PYLINT_DISABLED) $(SRC)
 
 $(README_API): venv $(SOURCES)
 	$(WITH_VENV) $(WITH_PYPATH) pdoc $(PACKAGE_NAME) > $(README_API)
