@@ -548,6 +548,7 @@ def eo(*strs, file=None, end=None, flush=None,
     # pylint: disable=too-many-boolean-expressions
     if (fmt is None
         and strs
+        and strs[0]
         and "{}" in strs[0]
         and strs[0].count("{}") == len(strs) -1
         and indent is None and joiner is None and style is None):
