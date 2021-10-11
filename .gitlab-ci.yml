@@ -101,7 +101,7 @@ pages:
   only:
     - master
 
-.upload-successful:
+upload-successful:
   extends: .cache-user
   stage: upload-successful
   script:
