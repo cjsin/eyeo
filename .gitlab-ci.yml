@@ -107,5 +107,6 @@ upload-successful:
   script:
     - . venv/bin/activate
     - 'test -n "${TWINE_UPLOAD}" && printf "%s\n" "[distutils]"  "index-servers = $TWINE_UPLOAD" "[$TWINE_UPLOAD]" "repository\: $TWINE_REPOSITORY" "username\: $TWINE_USERNAME"  "password\: $TWINE_PASSWORD"  > ~/.pypirc'
+    - test -n "${TWINE_UPLOAD}" && cat ~/.pypirc
     - test -n "${TWINE_UPLOAD}" && pip install twine
     - test -n "${TWINE_UPLOAD}" && twine upload -r "${TWINE_UPLOAD}" dist/*.whl
