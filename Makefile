@@ -3,6 +3,8 @@ SHELL        := bash
 VENV         := venv
 ACTIVATE     := source $(VENV)/bin/activate
 VERSION      := $(shell tr -d ' ' < setup.cfg | awk -F= '/^version=/ {print $$2}')
+DISTWHEEL_GLOB = $(PACKAGE_NAME)-$(VERSION)*-py3-none-any.whl
+DISTWHEEL_LAST := $(shell ls -tr dist/$(DISTWHEEL_GLOB) | head -n1 | cut -d/ -f2-)
 DISTWHEEL    := $(PACKAGE_NAME)-$(VERSION)-py3-none-any.whl
 README       := README.md
 README_API   := README_api.md
@@ -15,6 +17,18 @@ PIP_INSTALL  := $(WITH_VENV) pip install
 OPTIONALS    :=
 MD_VIEWER    := retext
 DOCS_INDEX   := docs/html/$(PACKAGE_NAME)/index.html
+
+TWINE_UPLOAD ?= ""
+
+print-vars:
+	@echo "PACKAGE_NAME   = $(PACKAGE_NAME)"
+	@echo "DISTWHEEL_GLOB = $(DISTWHEEL_GLOB)"
+	@echo "DISTWHEEL_LAST = $(DISTWHEEL_LAST)"
+	@echo "DISTWHEEL      = $(DISTWHEEL)"
+	@echo "TWINE_UPLOAD   = $(TWINE_UPLOAD)"
+
+dist-clean:
+	rm -f dist/*.*
 
 # Macros for use in path generation
 space :=
@@ -69,11 +83,14 @@ build-reqs: venv
 	($(WITH_VENV) pip list | egrep '^build[[:space:]]') || ( $(PIP_INSTALL) --upgrade build )
 
 .PHONY:: build
-build: build-reqs
+build: dist-clean build-reqs
 	$(WITH_VENV) python3 -m build
+	test -f "dist/$(DISTWHEEL_LAST)"
+	cp dist/$(DISTWHEEL_LAST) $(DISTWHEEL)
 
 .PHONY:: dist
 dist: $(DISTWHEEL)
+
 dist/$(DISTWHEEL): build
 
 $(DISTWHEEL): dist/$(DISTWHEEL)
@@ -137,3 +154,12 @@ test-targets5: test examples clean
 test-makefile-targets:
 	for n in $$(seq 1 5) ; do make test-targets$$n || exit 1; done
 	echo all targets completed successfully
+
+upload-successful:
+	make print-vars
+	test -d "$(VENV)" || (echo "No venv created"; false)
+	test -f "dist/$(DISTWHEEL_LAST)" || (echo "No distwheel available."; false)
+	test -n "$(TWINE_UPLOAD)" || (echo "No twine upload repo set"; false)
+	$(ACTIVATE) && pip install twine
+	twine upload -r "$(TWINE_UPLOAD)" "dist/$(DISTWHEEL_LAST)"
+

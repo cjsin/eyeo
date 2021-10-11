@@ -29,6 +29,7 @@ stages:
   - install
   - test
   - docs
+  - upload-successful
 
 prep:
   extends: .cache-creator
@@ -36,6 +37,7 @@ prep:
   script:
     - python3 -m venv venv
     - . venv/bin/activate
+    - if test -n "$TWINE_UPLOAD" ; then export PIP_EXTRA_INDEX_URL=$TWINE_REPOSITORY/simple/ ; fi
     - pip install --upgrade pip build wheel setuptools
   tags:
     - container
@@ -98,3 +100,18 @@ pages:
   extends: .docs-stage
   only:
     - master
+
+.upload-successful:
+  extends: .cache-user
+  stage: upload-successful
+  script:
+    - test -n "${TWINE_UPLOAD}" && printf "%s\n" \
+      "[distutils]" \
+      "index-servers = $TWINE_UPLOAD" \
+      "[$TWINE_UPLOAD]" \
+      "repository: $TWINE_REPOSITORY" \
+      "username: $TWINE_USERNAME" \
+      "password: $TWINE_PASSWORD" \
+      > ~/.pypirc
+    - test -n "${TWINE_UPLOAD}" && pip install twine
+    - test -n "${TWINE_UPLOAD}" && twine upload -r "${TWINE_UPLOAD}" dist/*.whl
