@@ -15,7 +15,7 @@ test-install:
   extends: .test-install
 
 run-examples:
-  extends: .test-install
+  extends: .run-examples
   script:
     - . venv/bin/activate
     - pip install dist/*.whl
