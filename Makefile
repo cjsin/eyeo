@@ -157,9 +157,9 @@ test-makefile-targets:
 
 upload-successful:
 	make print-vars
-	test -d "$(VENV)" || (echo "No venv created"; false)
-	test -f "dist/$(DISTWHEEL_LAST)" || (echo "No distwheel available."; false)
+	#test -d "$(VENV)" || (echo "No venv created"; false)
+	#test -f "dist/$(DISTWHEEL_LAST)" || (echo "No distwheel available."; false)
 	test -n "$(TWINE_UPLOAD)" || (echo "No twine upload repo set"; false)
-	$(ACTIVATE) && pip install twine
+	#$(ACTIVATE) && pip install twine
 	twine upload -r "$(TWINE_UPLOAD)" "dist/$(DISTWHEEL_LAST)"
 
