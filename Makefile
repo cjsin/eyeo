@@ -2,6 +2,8 @@ PACKAGE_NAME = eyeo
 
 include Makefile.pymodule
 
+OPTIONALS      := attrdict
+
 RUN_TESTS    = pytest $(SRC)
 RUN_MAIN     = $(RUN_PY_MOD) $(PACKAGE_NAME)
 RUN_EXAMPLE1 = $(RUN_PY_MOD) $(PACKAGE_NAME).examples
