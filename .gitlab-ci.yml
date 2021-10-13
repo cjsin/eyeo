@@ -1,9 +1,7 @@
-image: python:3.9-buster
+include: .gitlab-ci.pymodule.yml
 
 variables:
   PACKAGE_NAME: eyeo
-
-include: .gitlab-ci.pymodule.yml
 
 prep:
   extends: .prep
