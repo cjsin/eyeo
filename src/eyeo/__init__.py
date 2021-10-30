@@ -357,7 +357,7 @@ def output_pop(print_to_upper=False):
     #print(f" output_pop is returning ret={ret}, len_value={len_value}, data_value={data_value}", file=sys.stderr)
     return (ret, len_value, data_value)
 
-def reopen_to(fhandle, path, mode):
+def reopen_to(fhandle, path, mode, encoding=None):
     """
     close a filehandle and return a new one opened for the specified path and mode.
     example: sys.stdout = reopen_to(sys.stdout, "/tmp/log.txt", "w")
@@ -371,7 +371,9 @@ def reopen_to(fhandle, path, mode):
         file: the new filehandle
     """
     # pylint: disable=consider-using-with
-    newhandle = open(path, mode)
+    if encoding is None:
+        encoding = "utf-8"
+    newhandle = open(path, mode, encoding=encoding)
     if fhandle:
         fhandle.flush()
         fhandle.close()
@@ -496,7 +498,7 @@ def pretty(data, style=None, sort_keys=None, indent=None):
         return yaml.dump(data, sort_keys=sort_keys, default_flow_style=False, indent=indent, default_style=None, line_break="\n")
     return json.dumps(data, sort_keys=sort_keys, separators=(", ", " : "), indent=indent)
 
-def eo(*strs, file=None, end=None, flush=None,
+def eo(*args, file=None, end=None, flush=None,
             joiner=None, starter=None, indent=None,
             style=None, fmt=None, quote=None, quote_if=None,
             nonestr=None, lf=None, _debug=None):
@@ -540,22 +542,26 @@ def eo(*strs, file=None, end=None, flush=None,
 
     # pylint: disable=too-many-statements,too-many-branches
 
-    strs = list(strs)
+    args = list(args)
+    strs = []
+    if fmt is None:
+        args
 
     # Support this style:
     #    eo("a format {} with {}", "string", "data")
     # as long as no other contradictory options were passed
     # pylint: disable=too-many-boolean-expressions
     if (fmt is None
-        and strs
-        and strs[0]
-        and "{}" in strs[0]
-        and strs[0].count("{}") == len(strs) -1
+        and args
+        and args[0]
+        and isinstance(args[0], str)
+        and "{}" in args[0]
+        and args[0].count("{}") == len(args) -1
         and indent is None and joiner is None and style is None):
-        fmt = strs.pop(0)
+        fmt = args.pop(0)
         if file is None:
             file = Globals.output_handle if Globals.output_handle else sys.stderr
-        print(fmt.format(*strs) , file=file, end=end)
+        print(fmt.format(*args) , file=file, end=end)
         if flush:
             file.flush()
         return
@@ -630,13 +636,13 @@ def eo(*strs, file=None, end=None, flush=None,
             print("NOT using quoted(), quote=" + str(quote) + " and quote_if=" + str(quote_if), file=sys.stderr)
         return ret
 
-    if len(strs) == 1 and isinstance(strs[0], list):
-        strs = strs[0]
+    if len(args) == 1 and isinstance(args[0], list):
+        args = args[0]
 
     if fmt:
-        strs = [ format_val(v, idx=i) for i, v in enumerate(strs) ]
+        strs = [ format_val(v, idx=i) for i, v in enumerate(args) ]
     else:
-        strs = [ format_val(v) for v in strs ]
+        strs = [ format_val(v) for v in args ]
 
     line = prefix + joiner.join(strs)
     if file is None:
@@ -666,6 +672,11 @@ def eodir(o):
     """
     eo(f"index of object of type: {type(o)}:")
     eo("    " + "\n    ".join(sorted(dir(o))))
+
+def eohelp(x):
+    eo(f"Object of type {type(x)}")
+    eo("")
+    help(x)
 
 def eostack():
     """
@@ -709,6 +720,15 @@ def warnmsg(*args, **kwargs):
         see msg() or eo()
     """
     msg("WARNING:", *args, **kwargs)
+
+def infomsg(*args, **kwargs):
+    """
+    Print an info msg (prefix with "INFO:")
+
+    Parameters:
+        see msg() or eo()
+    """
+    msg("INFO:", *args, **kwargs)
 
 def warn(*args, **kwargs):
     """
@@ -797,6 +817,9 @@ def vverb(level, *args, **kwargs):
     if Globals.VERBOSE >= level:
         msg(*args, **kwargs)
 
+def verbmsg(*args, **kwargs):
+    vverb(1, *args, **kwargs)
+
 def dbgexit(*args):
     """
     Print a debug message and exit with status 1
@@ -874,8 +897,8 @@ def read_file(path):
     """
     try:
         # pylint: disable=bare-except
-        with open(path, 'r'):
-            return path.read()
+        with open(path, 'r') as f:
+            return f.read()
     except:
         if Globals.VERBOSE:
             traceback.print_exc()
@@ -895,8 +918,8 @@ def read_file_lines(path):
     """
     try:
         # pylint: disable=bare-except
-        with open(path, 'r'):
-            return path.readlines()
+        with open(path, 'r') as f:
+            return f.readlines()
     except:
         if Globals.VERBOSE:
             traceback.print_exc()

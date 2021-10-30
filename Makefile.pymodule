@@ -11,7 +11,7 @@ path-gen        = $(join-with $(colon),$1)
 VENV           := venv
 ACTIVATE       := source $(VENV)/bin/activate
 VERSION        := $(shell tr -d ' ' < setup.cfg | awk -F= '/^version=/ {print $$2}')
-DISTWHEEL_GLOB := $(PACKAGE_NAME)-$(VERSION)*-py3-none-any.whl
+DISTWHEEL_GLOB := $(PACKAGE_NAME)-$(VERSION)*.post*-py3-none-any.whl
 DISTWHEEL_LAST  = $(shell echo running distwheel_last 1>&2; ls -tr dist/$(DISTWHEEL_GLOB) 2> /dev/null | head -n1 | cut -d/ -f2-)
 DISTWHEEL      := $(PACKAGE_NAME)-$(VERSION)-py3-none-any.whl
 README         := README.md
@@ -26,7 +26,7 @@ RUN_PY_MOD     := $(PYTHON) -m
 RUN_TESTS      := pytest $(SRC)
 WITH_VENV      := $(ACTIVATE) &&
 PIP_INSTALL    := $(WITH_VENV) pip install
-WITH_PYPATH    := PYTHONPATH=$(PWD)/$(SRC)
+WITH_PYPATH    := PYTHONPATH=$(CURDIR)/$(SRC)
 OPTIONALS      := 
 MD_VIEWER      := retext
 DOCS_INDEX     := docs/html/$(PACKAGE_NAME)/index.html
@@ -51,7 +51,8 @@ PYLINT_DISABLED = invalid-name \
                   too-many-nested-blocks \
                   too-many-statements \
                   too-many-public-methods \
-                  too-many-locals
+                  too-many-locals \
+                  duplicate-code
 
 PYLINT_FLAGS   := -d $(call join-with,$(comma),$(PYLINT_DISABLED))
 CLEAN_PATTERNS := \
@@ -86,7 +87,7 @@ dist-clean:
 	rm -f dist/*.*
 
 lint: venv
-	$(WITH_VENV) pylint $(PYLINT_FLAGS) $(SRC)
+	$(WITH_VENV) $(WITH_PYPATH) pylint $(PYLINT_FLAGS) $(SRC)
 
 $(README_API): venv $(SOURCES)
 	$(WITH_VENV) $(WITH_PYPATH) pdoc $(PACKAGE_NAME) > $(README_API)
@@ -99,7 +100,7 @@ docs: $(README_API) clean-docs docs-html
 
 view-docs: docs
 	command -v $(MD_VIEWER) && $(MD_VIEWER) README*.md || echo "Markdown viewer not installed" &
-	xdg-open file://$(PWD)/$(DOCS_INDEX) &
+	xdg-open file://$(CURDIR)/$(DOCS_INDEX) &
 
 build-reqs: venv
 	($(WITH_VENV) pip list | egrep '^build[[:space:]]') || ( $(PIP_INSTALL) --upgrade build )
@@ -113,7 +114,7 @@ build-reqs: venv
 	echo "copy-distwheel-last:$(shell ls -tr dist/$(DISTWHEEL_GLOB) 2> /dev/null | head -n1 | cut -d/ -f2-)"
 	echo test -f "dist/$(DISTWHEEL_LAST)"
 	test -f "dist/$(DISTWHEEL_LAST)"
-	cp "dist/$(DISTWHEEL_LAST)" "$(DISTWHEEL)"
+	cp -a "dist/$(DISTWHEEL_LAST)" dist/"$(DISTWHEEL)"
 
 .perform-build: .run-build .copy-distwheel-last
 
@@ -122,7 +123,9 @@ build: dist-clean build-reqs .perform-build
 
 .PHONY:: dist
 dist: $(DISTWHEEL)
+
 dist/$(DISTWHEEL): build
+	make .copy-distwheel-last
 
 $(DISTWHEEL): dist/$(DISTWHEEL)
 	cp dist/$(DISTWHEEL) ./
