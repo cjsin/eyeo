@@ -64,7 +64,7 @@ stages:
     - if test -n "${APT_PKG}"; then apt-get update; apt -y install $APT_PKG ; fi
     - . venv/bin/activate
     - pip list
-    - pip install dist/*.whl
+    - pip install ${PIP_OPTIONS} dist/*.whl
     - pip list
 
 .pytest:
