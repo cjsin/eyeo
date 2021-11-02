@@ -72,7 +72,7 @@ stages:
   stage: test
   script:
     - . venv/bin/activate
-    - pip install dist/*.whl
+    - pip install ${PIP_OPTIONS} dist/*.whl
     - pytest $PACKAGE_NAME
 
 .run-examples:
