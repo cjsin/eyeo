@@ -46,10 +46,10 @@ stages:
   extends: .cache-creator
   stage: prep
   script: *prep-script-base
-  rules:
-    - exists:
-        - venv/
-      when: never
+  #rules:
+  #  - exists:
+  #      - venv/
+  #    when: never
 
 .build:
   extends: .cache-user
