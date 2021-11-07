@@ -544,8 +544,6 @@ def eo(*args, file=None, end=None, flush=None,
 
     args = list(args)
     strs = []
-    if fmt is None:
-        args
 
     # Support this style:
     #    eo("a format {} with {}", "string", "data")
@@ -678,13 +676,21 @@ def eohelp(x):
     eo("")
     help(x)
 
+def stacktrace(goback=0):
+    # pylint: disable=protected-access
+    f = sys._getframe()
+    f = f.f_back
+    while goback:
+        f = f.f_back
+        goback -= 1
+    return "".join(traceback.format_stack(f=f))
+
 def eostack():
     """
     print a stack trace
     """
     # pylint: disable=protected-access
-    f = sys._getframe().f_back.f_back
-    eo("".join(traceback.format_stack(f=f)))
+    eo(stacktrace(2))
     eo("")
 
 def msgx(joiner, *args, **kwargs):
@@ -897,6 +903,7 @@ def read_file(path):
     """
     try:
         # pylint: disable=bare-except
+        # pylint: disable=unspecified-encoding
         with open(path, 'r') as f:
             return f.read()
     except:
@@ -918,6 +925,7 @@ def read_file_lines(path):
     """
     try:
         # pylint: disable=bare-except
+        # pylint: disable=unspecified-encoding
         with open(path, 'r') as f:
             return f.readlines()
     except:
@@ -940,7 +948,7 @@ def write_file(path, contents):
     """
     try:
         # pylint: disable=bare-except
-        with open(path, 'w') as f:
+        with open(path, 'w', encoding='utf-8') as f:
             print(contents, file=f)
             return True
     except:
