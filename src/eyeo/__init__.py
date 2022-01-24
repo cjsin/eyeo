@@ -971,7 +971,6 @@ def os_path_splitall(path, support_unc=False):
     Returns:
         list: a list of the path components
     """
-    msg(f"os_path_splitall '{path}'")
 
     if path is None:
         return None
