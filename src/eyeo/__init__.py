@@ -685,6 +685,36 @@ def stacktrace(goback=0):
         goback -= 1
     return "".join(traceback.format_stack(f=f))
 
+def tb(file=None):
+    """
+    shortcut for traceback.print_stack() however with a default file output of sys.stderr
+
+    Parameters:
+        file (file): a file or None. if specified, use this file, otherwise use sys.stderr.
+    """
+    if file is None:
+        file = sys.stderr
+    traceback.print_stack(file=file)
+
+def current_line_number(frames=1):
+    try:
+        raise Exception()
+    except:
+        frame = sys.exc_info()[2].tb_frame
+        while frames:
+            frame = frame.f_back
+            frames -= 1
+        return frame.f_lineno
+
+class LINE:
+    def __repr__(self):
+        return str(current_line_number(frames=2))
+    def __call__(self, *args, **kwds):
+        return current_line_number(frames=2)
+
+__LINE__ = LINE()
+__line__ = __LINE__
+
 def eostack():
     """
     print a stack trace
@@ -1036,19 +1066,6 @@ def isatty():
     return true if sys.stdin is detected as being a tty
     """
     return sys.stdin.isatty()
-
-
-def tb(file=None):
-    """
-    shortcut for traceback.print_stack() however with a default file output of sys.stderr
-
-    Parameters:
-        file (file): a file or None. if specified, use this file, otherwise use sys.stderr.
-    """
-    if file is None:
-        file = sys.stderr
-    traceback.print_stack(file=file)
-
 
 def print_lines(lines, file='__unspecified__'):
     """
