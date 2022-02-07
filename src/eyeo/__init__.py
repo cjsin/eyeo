@@ -47,6 +47,7 @@ import inspect
 import traceback
 import logging
 import json
+import time
 
 from io import StringIO
 from pprint import pformat
@@ -850,6 +851,10 @@ def vverb(level, *args, **kwargs):
         args:       see msg()
         kwargs:     see msg()
     """
+    if not isinstance(level, int):
+        args = [level] + list(args)
+        level = 1
+
     if Globals.VERBOSE >= level:
         msg(*args, **kwargs)
 
@@ -1084,3 +1089,34 @@ def print_lines(lines, file='__unspecified__'):
     for line in lines:
         print(line, file=file)
 
+
+def timed(message, handler, verbose=0):
+    now = time.time()
+    vverb(verbose, message + "...", end="", flush=True)
+
+    _buf = output_buffer()
+
+    result = handler()
+    then = now
+    now = time.time()
+
+    (_popped_buf, buflen, bufdata) = output_pop()
+    if buflen:
+        eo("")
+        eo(bufdata)
+        eo(message, end="")
+    vverb(verbose, f" complete in {now - then:0.4f}s")
+    return result
+
+def vtimed(level, message, handler):
+    timed(message, handler, verbose=level)
+
+
+def disable_atk_bridge_spurious_messages():
+    # If the AT-SPI developers wish their software to be used, they shouldn't dump
+    # countless error messages to the console all the time.
+    # So their crap is disabled here unless FORCE_AT_BRIDGE is set to 1 (for people who want it)
+    if os.environ.get("FORCE_AT_BRIDGE","0") != "1":
+        os.environ["NO_AT_BRIDGE"] = "1"
+
+disable_atk_bridge_spurious_messages()
