@@ -1111,7 +1111,6 @@ def timed(message, handler, verbose=0):
 def vtimed(level, message, handler):
     timed(message, handler, verbose=level)
 
-
 def disable_atk_bridge_spurious_messages():
     # If the AT-SPI developers wish their software to be used, they shouldn't dump
     # countless error messages to the console all the time.
